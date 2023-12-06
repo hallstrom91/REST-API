@@ -3,15 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
     <title>My REST-API</title>
   </head>
   <body>
     <h1>Dokumentation</h1>
-    <h2>REST-API - nodejs_login SQL database</h2>
-    <p>GET - /register för alla användare</p>
-    <p>GET - /register?id=NUMMER för enskild användare efter ID</p>
+    <h2>REST-API</h2>
+    <h3>nodejs_login SQL database</h3>
+    <p class="boldParagraph">User Database: (SQL table name = register)</p>
+    <p>GET - /users för alla användare</p>
+    <p>GET - /users?id=ID-NUMMER för enskild användare efter ID</p>
+    <p class="boldParagraph">Guestbook Database: (SQL table name = comments)</p>
     <p>GET - /comments för alla kommentarer</p>
     <p>GET - /comments?id=NUMMER för enskild kommentar efter ID</p>
-    <p>POST - /register för lägga till EN användare</p>
+    <p class="boldParagraph">Add new user to Database:</p>
+    <p>
+      POST - /addUser för lägga till EN användare via Insomnia i JSON-format.
+    </p>
+    <p>
+      { "name": "Rudolf", "username": "Rudolf33", "password": "secretpassword",
+      "email": "ilove@emailspam.com" }
+    </p>
+    <p>
+      POST - /addComment för att lägga till ett gästboksinlägg genom Insomnia i
+      JSON-format.
+    </p>
+    <p>{ "name": "Pelle", "message": "Mitt meddelande" }</p>
+    <p class="boldParagraph">Change thru PUT</p>
+    <p>
+      PUT - /editUser/ID-NUMMER för att uppdatera en användare med specifikt ID
+      med JSON-format i Insomnia.
+    </p>
+    <p>
+      { "name": "Olle", "username": "Olle44", "password": "nopassword", "email":
+      "ilove@emailspam.not" }
+    </p>
+    <p>
+      PUT - /editComment/ID-NUMMER för att uppdatera ett gästboksinlägg genom
+      Insomnia via ID.
+    </p>
+    <p>{ "name": "Olle", "message": "Mitt nya fina uppdaterade meddelande" }</p>
+    <p class="boldParagraph">DELETE from database!</p>
+    <p>
+      DELETE - /deleteUser/IDNUMMER - via insomnia eller URL raderar specifik
+      användare med angivet ID
+    </p>
+    <p>
+      DELETE - /deleteComment/IDNUMMER - via insomnia eller URL för att radera
+      ett specifikt gästboksinlägg ur databasen.
+    </p>
   </body>
 </html>
