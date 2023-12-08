@@ -73,7 +73,7 @@ app.use(
 
 app.listen(process.env.PORT, () => {});
 
-//Log every incoming session and user-ip in CMD
+//Logs every incoming request and user-ip in CMD
 app.use((request, response, next) => {
   console.log(
     `[${new Date().toLocaleString()}] [USER-IP ${request.ip}] ${
@@ -104,6 +104,12 @@ JWT AND CRYPTO
 */
 
 // JWT Authorization Function to be called in DELETE AND PUT.
+// DO NOT WORK CORRECTLY! Call for authToken in desired script like:
+// app.get("/users/:id?", authToken, function (request, response) {
+// or
+// app.get("/users/:id?", authToken (request, response) => {
+// but to get it to wokr you need to put user jwt in token and prefix input, click send and get error several times
+// then remove from token input and leave jwt token in prefix and you will get access. Holy crap that one f- my mind for many hours.
 
 /* const authToken = async (request, response, next) => {
   const token = request.header("Authorization");
@@ -122,13 +128,13 @@ JWT AND CRYPTO
   }
 }; */
 
-function authToken(request, response, next) {
+/* function authToken(request, response, next) {
   const token = request.header("Authorization");
 
   if (!token) {
     return response.sendStatus(401);
   } else {
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    decode = jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) {
         return response.sendStatus(403);
       } else {
@@ -137,7 +143,7 @@ function authToken(request, response, next) {
       }
     });
   }
-}
+} */
 
 //hash function for password
 function cryptohash(data) {
@@ -152,8 +158,30 @@ GET (USERS REQ JWT)
 ============================
 */
 
-// get all users or singel-user with command /users/NUMBER or /users (REQ JWT)
-app.get("/users/:id?", authToken, (request, response) => {
+// get all users or singel-user with command /users/ID or /users (REQ JWT)
+app.get("/users/:id?", function (request, response) {
+  // Require JWT and decode
+  let authJWT = request.headers["authorization"];
+  if (authJWT === undefined) {
+    response.sendStatus(400).send("Token saknas.");
+    return;
+  }
+
+  let token = authJWT.slice(7);
+
+  // decrypt and compare user-token with jwt_secret
+  let decrypt;
+  try {
+    decrypt = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    console.log(err);
+    response
+      .status(401)
+      .send("Felaktigt eller saknat Token! Vänligen fyll i ditt login-token!");
+    return;
+  }
+  // if token is correct, run this code!
+
   let userID = request.params.id;
   let sqlDB = "SELECT * FROM register";
   let parameters = [];
@@ -172,7 +200,7 @@ app.get("/users/:id?", authToken, (request, response) => {
   });
 });
 
-// get all comments or specific comment thru id /comments/NUMBER or /comments
+// get all comments or specific comment thru id /comments/ID or /comments
 app.get("/comments/:id?", function (request, response) {
   let commentID = request.params.id;
   let sqlDB = "SELECT * FROM comments";
@@ -198,7 +226,7 @@ POST
 ============================
 */
 
-// POST new user to DB thru insomnia and json-format /addUser
+// POST new user to DB thru insomnia and json-format /addUser (NO JWT REQ)
 app.post("/addUser", function (request, response) {
   const { name, username, password, email } = request.body;
   // confirm that no input value is empty
@@ -224,13 +252,13 @@ app.post("/addUser", function (request, response) {
         console.error("Error with query", err);
         response.status(500).send("Server Error");
       } else {
-        response.send("En ny användare är inlagd i databasen!");
+        response.status(201).send("En ny användare är inlagd i databasen!"); // 201 STATUS - CREATED
       }
     });
   }
 });
 
-// Post new comment to DB thru insomnia and json-format /addComment
+// Post new comment to DB thru insomnia and json-format /addComment (NO JWT REQ)
 app.post("/addComment", function (request, response) {
   const { name, message } = request.body;
   //confirm no empty values
@@ -251,7 +279,7 @@ app.post("/addComment", function (request, response) {
         console.log("Error with query", err);
         response.send(500).send("Server Error");
       } else {
-        response.send("Ett nytt gästboks-inlägg är skapat!");
+        response.status(201).send("Ett nytt gästboks-inlägg är skapat!"); // 201 STATUS - CREATED
       }
     });
   }
@@ -264,7 +292,27 @@ PUT (REQ JWT)
 */
 
 // change value on specific user thru /editUser/ID (REQ JWT)
-app.put("/editUser/:id", authToken, function (request, response) {
+app.put("/editUser/:id", function (request, response) {
+  // Require JWT and decode
+  let authJWT = request.headers["authorization"];
+  if (authJWT === undefined) {
+    response.sendStatus(400).send("Token saknas.");
+    return;
+  }
+
+  let token = authJWT.slice(7);
+
+  // decrypt and compare user-token with jwt_secret
+  let decrypt;
+  try {
+    decrypt = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    console.log(err);
+    response.status(401).send("Ogiltigt Token!");
+    return;
+  }
+  // if token is correct, run this code!
+
   if (!request.params && !request.params.id) {
     return response.status(400).send("Ogiltig förfrågan.");
   }
@@ -290,22 +338,44 @@ app.put("/editUser/:id", authToken, function (request, response) {
     return response.status(400).send("Email måste fyllas i för att ändras!!");
   } else {
   }
+  // hash update password to DB.
+  const hashedPW = cryptohash(password);
   const sqlDB =
     "UPDATE register SET name = ?, username = ?, password = ?, email = ? WHERE id = ? ";
-  const values = [name, username, password, email, userID];
+  const values = [name, username, hashedPW, email, userID];
 
   connectDB.query(sqlDB, values, function (err, result, fields) {
     if (err) {
       console.log("Error with query", err);
       response.status(500).send("Server Error");
     } else {
-      response.send("Användaruppgifterna har uppdaterats!");
+      response.status(200).send("Användaruppgifterna har uppdaterats!"); // 200 - OK STATUS
     }
   });
 });
 
 // change value on specific guestbook-comment thru /editComment/ID (REQ JWT)
-app.put("/editComment/:id", authToken, function (request, response) {
+app.put("/editComment/:id", function (request, response) {
+  // Require JWT and decode
+  let authJWT = request.headers["authorization"];
+  if (authJWT === undefined) {
+    response.sendStatus(400).send("Token saknas.");
+    return;
+  }
+
+  let token = authJWT.slice(7);
+
+  // decrypt and compare user-token with jwt_secret
+  let decrypt;
+  try {
+    decrypt = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    console.log(err);
+    response.status(401).send("Ogiltigt Token!");
+    return;
+  }
+  // if token is correct, run this code!
+
   if (!request.params && !request.params.id) {
     return response.status(400).send("Ogiltig förfrågan");
   }
@@ -340,8 +410,26 @@ DELETE (REQ JWT)
 */
 
 //Delete users thru /deleteUser/ID (REQ JWT)
-app.delete("/deleteUser/:id", authToken, function (request, response) {
-  const userID = request.params.id;
+app.delete("/deleteUser/:id", function (request, response) {
+  // Require JWT and decode
+  let authJWT = request.headers["authorization"];
+  if (authJWT === undefined) {
+    response.sendStatus(400).send("Token saknas.");
+    return;
+  }
+
+  let token = authJWT.slice(7);
+
+  // decrypt and compare user-token with jwt_secret
+  let decrypt;
+  try {
+    decrypt = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    console.log(err);
+    response.status(401).send("Ogiltigt Token!");
+    return;
+  }
+  // if token is correct, run this code!
 
   if (!userID) {
     return response.status(400).send("Ogiltig förfrågan!");
@@ -360,7 +448,26 @@ app.delete("/deleteUser/:id", authToken, function (request, response) {
 });
 
 //Delete comment thru /deleteComment/ID (REQ JWT)
-app.delete("/deleteComment/:id", authToken, function (request, response) {
+app.delete("/deleteComment/:id", function (request, response) {
+  // Require JWT and decode
+  let authJWT = request.headers["authorization"];
+  if (authJWT === undefined) {
+    response.sendStatus(400).send("Token saknas.");
+    return;
+  }
+
+  let token = authJWT.slice(7);
+
+  // decrypt and compare user-token with jwt_secret
+  let decrypt;
+  try {
+    decrypt = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    console.log(err);
+    response.status(401).send("Ogiltigt Token!");
+    return;
+  }
+  // if token is correct, run this code!
   const commentID = request.params.id;
 
   if (!commentID) {
@@ -414,14 +521,15 @@ app.post("/login", function (request, response) {
         const token = jwt.sign(userInfo, process.env.JWT_SECRET, {
           expiresIn: "2h",
         });
-        response.json({
+        // 200 STATUS OK FOR LOGIN SUCCESS, 401 STATUS FOR FAILED LOGIN ATTEMPT
+        response.status(200).json({
           message: "Inloggning är godkänd.",
           user: userInfo,
           token: token,
         });
         console.log("Your Session Token: " + token);
       } else {
-        response.send("Inloggning misslyckades.");
+        response.status(401).send("Inloggning misslyckades.");
       }
     }
   });
