@@ -1,3 +1,39 @@
+/* 
+!!! START OF INFO !!!
+
+database name = nodejs_login
+
+table 1 for registered users = name: register
+register (name, username, password, email)
+
+CREATE TABLE IF NOT EXISTS `register` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+
+
+table 2 for saved comments = name: comments
+comments (name, message)
+
+CREATE TABLE IF NOT EXISTS `comments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL,
+  `message` varchar(2000) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+
+
+Or Change values to connect to your own database below!
+
+!!! END OF INFO !!!
+*/
+
 /*
 ============================
 Setup API
@@ -338,7 +374,7 @@ app.put("/editUser/:id", function (request, response) {
     return response.status(400).send("Email måste fyllas i för att ändras!!");
   } else {
   }
-  // hash update password to DB.
+  // hash updated password to DB.
   const hashedPW = cryptohash(password);
   const sqlDB =
     "UPDATE register SET name = ?, username = ?, password = ?, email = ? WHERE id = ? ";
@@ -430,6 +466,7 @@ app.delete("/deleteUser/:id", function (request, response) {
     return;
   }
   // if token is correct, run this code!
+  const userID = request.params.id;
 
   if (!userID) {
     return response.status(400).send("Ogiltig förfrågan!");
@@ -442,7 +479,7 @@ app.delete("/deleteUser/:id", function (request, response) {
       console.error("Error with query", err);
       response.status(500).send("Server Error");
     } else {
-      response.send("Användare är borttagen ur databasen.");
+      response.status(202).send("Användare är borttagen ur databasen."); // 202 STATUS ACCEPTED
     }
   });
 });
@@ -481,7 +518,7 @@ app.delete("/deleteComment/:id", function (request, response) {
       console.error("Error with query", err);
       response.status(500).send("Server Error");
     } else {
-      response.send("Gästboksinlägg är borttaget ur databasen.");
+      response.status(202).send("Gästboksinlägg är borttaget ur databasen."); // 202 STATUS ACCEPTED
     }
   });
 });
