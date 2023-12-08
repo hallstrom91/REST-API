@@ -10,13 +10,35 @@
     <h1>Dokumentation</h1>
     <h2>REST-API</h2>
     <h3>nodejs_login SQL database</h3>
-    <p class="boldParagraph">User Database: (SQL table name = register)</p>
-    <p>GET - /users för alla användare</p>
-    <p>GET - /users?id=ID-NUMMER för enskild användare efter ID</p>
-    <p class="boldParagraph">Guestbook Database: (SQL table name = comments)</p>
-    <p>GET - /comments för alla kommentarer</p>
-    <p>GET - /comments?id=NUMMER för enskild kommentar efter ID</p>
-    <p class="boldParagraph">Add new user to Database:</p>
+    <h4>SQL user table name = register || guestbook table name = comments</h4>
+    <!--GET-->
+    <p class="boldParagraph">Fetch users thru GET:</p>
+    <p>
+      GET - /users för att hämta alla användare.
+      <box-icon
+        name="lock-alt"
+        type="solid"
+        animation="tada"
+        rotate="180"
+      ></box-icon>
+    </p>
+
+    <p>
+      GET - /users/ID för att hämta en enskild användare efter ID.
+      <box-icon
+        name="lock-alt"
+        type="solid"
+        animation="tada"
+        rotate="180"
+      ></box-icon>
+    </p>
+    <p class="boldParagraph">Fetch comments thru GET:</p>
+    <p>GET - /comments för att hämta alla kommentarer.</p>
+    <p>GET - /comments/ID för att hämta en enskild kommentar efter ID.</p>
+    <!--POST-->
+    <p class="boldParagraph">Add new user thru POST:</p>
+    <p>POST - / Login för att logga in med registrerad användare.</p>
+    <p>{ "username": "hejsan", "password": "password" }</p>
     <p>
       POST - /addUser för lägga till EN användare via Insomnia i JSON-format.
     </p>
@@ -29,28 +51,56 @@
       JSON-format.
     </p>
     <p>{ "name": "Pelle", "message": "Mitt meddelande" }</p>
-    <p class="boldParagraph">Change thru PUT</p>
+    <!--PUT-->
+    <p class="boldParagraph">Change thru PUT:</p>
     <p>
-      PUT - /editUser/ID-NUMMER för att uppdatera en användare med specifikt ID
-      med JSON-format i Insomnia.
+      PUT - /editUser/ID för att uppdatera en användare med specifikt ID med
+      JSON-format i Insomnia.
+      <box-icon
+        name="lock-alt"
+        type="solid"
+        animation="tada"
+        rotate="180"
+      ></box-icon>
     </p>
     <p>
       { "name": "Olle", "username": "Olle44", "password": "nopassword", "email":
       "ilove@emailspam.not" }
     </p>
     <p>
-      PUT - /editComment/ID-NUMMER för att uppdatera ett gästboksinlägg genom
-      Insomnia via ID.
+      PUT - /editComment/ID för att uppdatera ett gästboksinlägg genom Insomnia
+      via ID och JSON-format.
+      <box-icon
+        name="lock-alt"
+        type="solid"
+        animation="tada"
+        rotate="180"
+      ></box-icon>
     </p>
     <p>{ "name": "Olle", "message": "Mitt nya fina uppdaterade meddelande" }</p>
-    <p class="boldParagraph">DELETE from database!</p>
+    <!--DELETE-->
+    <p class="boldParagraph">Remove thru DELETE:</p>
     <p>
-      DELETE - /deleteUser/IDNUMMER - via insomnia eller URL raderar specifik
+      DELETE - /deleteUser/ID - via insomnia eller URL raderar specifik
       användare med angivet ID
+      <box-icon
+        name="lock-alt"
+        type="solid"
+        animation="tada"
+        rotate="180"
+      ></box-icon>
     </p>
     <p>
-      DELETE - /deleteComment/IDNUMMER - via insomnia eller URL för att radera
-      ett specifikt gästboksinlägg ur databasen.
+      DELETE - /deleteComment/ID - via insomnia eller URL för att radera ett
+      specifikt gästboksinlägg ur databasen.
+      <box-icon
+        name="lock-alt"
+        type="solid"
+        animation="tada"
+        rotate="180"
+      ></box-icon>
     </p>
+    <!--Icons for displaying locked with token-->
+    <script src="https://unpkg.com/boxicons@2.1.3/dist/boxicons.js"></script>
   </body>
 </html>

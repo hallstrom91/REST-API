@@ -1,3 +1,7 @@
 .boldParagraph {
   font-weight: 700;
 }
+
+.lockIcon {
+  display: inline-block;
+}

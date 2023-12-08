@@ -12,6 +12,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 const bodyParser = require("body-parser");
 const { request } = require("http");
+const req = require("express/lib/request");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -82,25 +83,13 @@ app.use((request, response, next) => {
   next();
 });
 
-// JWT Auth
-function authToken(request, response, next) {
-  const token = req.header("Auth");
-  if (!token) return response.sendStatus(401);
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return response.sendStatus(403);
-    request.user = user;
-    next();
-  });
-}
-
 /*
 ============================
 HTML Display
 ============================
 */
 
-// CSS and client side JS
+// CSS and client side JS (no JS file in this project thou)
 app.use(express.static(path.join(__dirname, "static")));
 
 // HTML
@@ -110,17 +99,68 @@ app.get("/", (request, response) => {
 
 /*
 ============================
-GET
+JWT AND CRYPTO
 ============================
 */
-// get all users or singel-user with command /user?id=number or /users for all
-app.get("/users/:id?", function (request, response) {
+
+// JWT Authorization Function to be called in DELETE AND PUT.
+
+/* const authToken = async (request, response, next) => {
+  const token = request.header("Authorization");
+
+  if (!token) {
+    return response.status(401).send("Missing Token!");
+  }
+  try {
+    const user = await jwt.verify(token, process.env.JWT_SECRET);
+    request.user = user; // jwt-payload?!
+    console.log(token);
+    next();
+  } catch (err) {
+    console.error(err);
+    return response.status(403).send("Invalid Token!");
+  }
+}; */
+
+function authToken(request, response, next) {
+  const token = request.header("Authorization");
+
+  if (!token) {
+    return response.sendStatus(401);
+  } else {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return response.sendStatus(403);
+      } else {
+        request.user = user;
+        next();
+      }
+    });
+  }
+}
+
+//hash function for password
+function cryptohash(data) {
+  const cryptohash = crypto.createHash("sha256");
+  cryptohash.update(data);
+  return cryptohash.digest("hex");
+}
+
+/*
+============================
+GET (USERS REQ JWT)
+============================
+*/
+
+// get all users or singel-user with command /users/NUMBER or /users (REQ JWT)
+app.get("/users/:id?", authToken, (request, response) => {
+  let userID = request.params.id;
   let sqlDB = "SELECT * FROM register";
   let parameters = [];
 
-  if (request.query.id) {
+  if (userID) {
     sqlDB += " WHERE id = ?";
-    parameters.push(request.query.id);
+    parameters.push(userID);
   }
   connectDB.query(sqlDB, parameters, function (err, result, fields) {
     if (err) {
@@ -132,14 +172,15 @@ app.get("/users/:id?", function (request, response) {
   });
 });
 
-// get all comments or specific comment thru id /comments?id=number or /comments for all
-app.get("/comments", function (request, response) {
+// get all comments or specific comment thru id /comments/NUMBER or /comments
+app.get("/comments/:id?", function (request, response) {
+  let commentID = request.params.id;
   let sqlDB = "SELECT * FROM comments";
   let parameters = [];
 
-  if (request.query.id) {
+  if (commentID) {
     sqlDB += " WHERE id = ?";
-    parameters.push(request.query.id);
+    parameters.push(commentID);
   }
   connectDB.query(sqlDB, parameters, function (err, result, fields) {
     if (err) {
@@ -157,7 +198,7 @@ POST
 ============================
 */
 
-// POST new user to DB thru insomnia and json-format
+// POST new user to DB thru insomnia and json-format /addUser
 app.post("/addUser", function (request, response) {
   const { name, username, password, email } = request.body;
   // confirm that no input value is empty
@@ -172,9 +213,11 @@ app.post("/addUser", function (request, response) {
   } else if (!email) {
     return response.status(400).send("Email måste fyllas i!");
   } else {
+    //take value from password and encrypt
+    const hashedPW = cryptohash(password);
     const sqlDB =
       "INSERT INTO register (name, username, password, email) VALUES (?, ?, ?, ?)";
-    const values = [name, username, password, email];
+    const values = [name, username, hashedPW, email];
 
     connectDB.query(sqlDB, values, function (err, result, fields) {
       if (err) {
@@ -187,7 +230,7 @@ app.post("/addUser", function (request, response) {
   }
 });
 
-// Post new comment to DB thru insomnia and json-format
+// Post new comment to DB thru insomnia and json-format /addComment
 app.post("/addComment", function (request, response) {
   const { name, message } = request.body;
   //confirm no empty values
@@ -216,12 +259,12 @@ app.post("/addComment", function (request, response) {
 
 /*
 ============================
-PUT
+PUT (REQ JWT)
 ============================
 */
 
-// change value on specific user thru /editUser/number
-app.put("/editUser/:id", function (request, response) {
+// change value on specific user thru /editUser/ID (REQ JWT)
+app.put("/editUser/:id", authToken, function (request, response) {
   if (!request.params && !request.params.id) {
     return response.status(400).send("Ogiltig förfrågan.");
   }
@@ -261,8 +304,8 @@ app.put("/editUser/:id", function (request, response) {
   });
 });
 
-// change value on specific guestbook-comment thru /editComment/number
-app.put("/editComment/:id", function (request, response) {
+// change value on specific guestbook-comment thru /editComment/ID (REQ JWT)
+app.put("/editComment/:id", authToken, function (request, response) {
   if (!request.params && !request.params.id) {
     return response.status(400).send("Ogiltig förfrågan");
   }
@@ -292,11 +335,12 @@ app.put("/editComment/:id", function (request, response) {
 
 /*
 ============================
-DELETE
+DELETE (REQ JWT)
 ============================
 */
-//Delete users thru /deleteUser/ID
-app.delete("/deleteUser/:id", function (request, response) {
+
+//Delete users thru /deleteUser/ID (REQ JWT)
+app.delete("/deleteUser/:id", authToken, function (request, response) {
   const userID = request.params.id;
 
   if (!userID) {
@@ -315,8 +359,8 @@ app.delete("/deleteUser/:id", function (request, response) {
   });
 });
 
-//Delete comment thru /deleteComment/ID
-app.delete("/deleteComment/:id", function (request, response) {
+//Delete comment thru /deleteComment/ID (REQ JWT)
+app.delete("/deleteComment/:id", authToken, function (request, response) {
   const commentID = request.params.id;
 
   if (!commentID) {
@@ -331,6 +375,54 @@ app.delete("/deleteComment/:id", function (request, response) {
       response.status(500).send("Server Error");
     } else {
       response.send("Gästboksinlägg är borttaget ur databasen.");
+    }
+  });
+});
+
+/*
+============================
+Login with POST (GIVES JWT)
+============================
+*/
+
+app.post("/login", function (request, response) {
+  const username = request.body.username;
+  const password = request.body.password;
+
+  if (!username && !password) {
+    response.status(401).send("Fyll i alla uppgifter för att logga in!");
+  }
+
+  const compareHash = cryptohash(password);
+  const sqlDB = "SELECT * FROM register WHERE username = ? AND password = ?";
+  const values = [username, compareHash];
+
+  connectDB.query(sqlDB, values, function (err, result, fields) {
+    if (err) {
+      console.error("Error with query", err);
+      response.send(500).send("Server Error");
+    } else {
+      if (result.length > 0) {
+        // get user session info and display after login
+        const userInfo = {
+          id: result[0].id,
+          name: result[0].name,
+          sub: result[0].username,
+          email: result[0].email,
+        };
+        //create jwt for user
+        const token = jwt.sign(userInfo, process.env.JWT_SECRET, {
+          expiresIn: "2h",
+        });
+        response.json({
+          message: "Inloggning är godkänd.",
+          user: userInfo,
+          token: token,
+        });
+        console.log("Your Session Token: " + token);
+      } else {
+        response.send("Inloggning misslyckades.");
+      }
     }
   });
 });
