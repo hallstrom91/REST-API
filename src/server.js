@@ -47,8 +47,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const path = require("path");
 const bodyParser = require("body-parser");
-const { request } = require("http");
-const req = require("express/lib/request");
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -59,7 +58,6 @@ SQL Database
 ============================
 */
 
-dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 console.log("Server is running on port " + process.env.PORT);
 
@@ -130,7 +128,7 @@ app.use(express.static(path.join(__dirname, "static")));
 
 // HTML
 app.get("/", (request, response) => {
-  response.sendFile(path.join(__dirname + "/index.html"));
+  response.sendFile(path.join(__dirname,  "../public/index.html"));
 });
 
 /*
