@@ -133,51 +133,10 @@ app.get("/", (request, response) => {
 
 /*
 ============================
-JWT AND CRYPTO
+CRYPTO
 ============================
 */
 
-// JWT Authorization Function to be called in DELETE AND PUT.
-// DO NOT WORK CORRECTLY! Call for authToken in desired script like:
-// app.get("/users/:id?", authToken, function (request, response) {
-// or
-// app.get("/users/:id?", authToken (request, response) => {
-// but to get it to wokr you need to put user jwt in token and prefix input, click send and get error several times
-// then remove from token input and leave jwt token in prefix and you will get access. Holy crap that one f- my mind for many hours.
-
-/* const authToken = async (request, response, next) => {
-  const token = request.header("Authorization");
-
-  if (!token) {
-    return response.status(401).send("Missing Token!");
-  }
-  try {
-    const user = await jwt.verify(token, process.env.JWT_SECRET);
-    request.user = user; // jwt-payload?!
-    console.log(token);
-    next();
-  } catch (err) {
-    console.error(err);
-    return response.status(403).send("Invalid Token!");
-  }
-}; */
-
-/* function authToken(request, response, next) {
-  const token = request.header("Authorization");
-
-  if (!token) {
-    return response.sendStatus(401);
-  } else {
-    decode = jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) {
-        return response.sendStatus(403);
-      } else {
-        request.user = user;
-        next();
-      }
-    });
-  }
-} */
 
 //hash function for password
 function cryptohash(data) {
